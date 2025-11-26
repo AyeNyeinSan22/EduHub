@@ -1,0 +1,23 @@
+# ========== REACT FRONTEND ==========
+node_modules/
+build/
+dist/
+.cache/
+.vite/
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ========== PYTHON / FLASK BACKEND ==========
+venv/
+__pycache__/
+instance/
+.env
+.pytest_cache/
+*.pyc
+*.pyo
+
+# ========== GENERAL ==========
+.DS_Store
+*.log
