@@ -1,33 +1,45 @@
-import React from "react";
+export default function DeleteModal({ open, onClose, onConfirm }) {
+  if (!open) return null;
 
-export default function DeleteModal({ onCancel, onConfirm }) {
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white w-80 p-6 rounded-xl shadow-xl text-center">
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50">
 
-                <h2 className="text-xl font-semibold mb-2 text-red-600">
-                    Are you sure?
-                </h2>
-                <p className="text-gray-600 text-sm mb-6">
-                    You are about to delete this note permanently.
-                </p>
+      <div className="bg-white rounded-2xl p-8 w-96 shadow-xl animate-fadeIn">
 
-                <div className="flex justify-center gap-4">
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2 border rounded-lg hover:bg-gray-100"
-                    >
-                        Cancel
-                    </button>
+        {/* ICON */}
+        <div className="text-center text-5xl mb-3">⚠️</div>
 
-                    <button
-                        onClick={onConfirm}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg"
-                    >
-                        Delete
-                    </button>
-                </div>
-            </div>
+        {/* TITLE */}
+        <h2 className="text-center text-2xl font-bold mb-2">
+          Delete Note?
+        </h2>
+
+        {/* MESSAGE */}
+        <p className="text-center text-gray-600 mb-6">
+          The note will be permanently deleted. Are you sure you want to delete this note?
+        </p>
+
+        {/* BUTTONS */}
+        <div className="flex justify-center gap-4">
+          
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-200 rounded-lg font-medium hover:bg-gray-300 transition"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition"
+          >
+            Delete
+          </button>
+
         </div>
-    );
+
+      </div>
+
+    </div>
+  );
 }

@@ -1,4 +1,3 @@
-
 import os
 
 class Config:
@@ -11,11 +10,13 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "jwt-secret-key")
-    JWT_ACCESS_TOKEN_EXPIRES = 60 * 60 * 24  # 24 hours
 
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-    COVER_FOLDER = os.path.join(UPLOAD_FOLDER, "covers") 
-    # Set to 200MB (adjust if needed)
-    MAX_CONTENT_LENGTH = 200 * 1024 * 1024  
+    # --- FIXED PATHS ---
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # backend/
+    PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))  # EduHub/
 
+    UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, "uploads")
+    COVER_FOLDER = os.path.join(UPLOAD_FOLDER, "covers")
+    AVATAR_FOLDER = os.path.join(UPLOAD_FOLDER, "avatars")
+    MAX_CONTENT_LENGTH = 200 * 1024 * 1024
     ALLOWED_FILE_EXTENSIONS = {"pdf", "jpg", "jpeg", "png"}

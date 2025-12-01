@@ -1,58 +1,133 @@
+// src/pages/Home.jsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+// API
+import { getNotes, deleteNote } from "../api/notes";
+
+// Components
+import NotesCard from "../components/NotesCard";
+import ReminderCarousel from "../components/ReminderCarousel";
+import ScheduleCard from "../components/ScheduleCard";
+import useDarkMode from "../hooks/useDarkMode";
+
 export default function Home() {
+  const [notes, setNotes] = useState([]);
+  const [recentNotes, setRecentNotes] = useState([]);
+  const navigate = useNavigate();
+  const [dark, setDark] = useDarkMode();
+
+  /* ===============================
+        LOAD NOTES ON PAGE LOAD
+  ================================ */
+  useEffect(() => {
+    loadNotes();
+  }, []);
+
+  async function loadNotes() {
+    try {
+      const data = await getNotes();
+
+      const sorted = data.sort(
+        (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+      );
+
+      setNotes(sorted);
+      setRecentNotes(sorted.slice(0, 4));
+    } catch (err) {
+      console.error("Failed to load notes:", err);
+    }
+  }
+
+  /* ===============================
+        DELETE NOTE
+  ================================ */
+  async function handleDelete(id) {
+    try {
+      await deleteNote(id);
+      await loadNotes();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  }
+
+  /* ===============================
+        UI
+  ================================ */
   return (
-    <div>
+    <div
+      className={`min-h-screen p-6 md:p-10 transition-all ${
+        dark ? "bg-gray-900 text-white" : "bg-[#F8F8F8]"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto">
 
-      {/* CLASSROOM REMINDER SECTION */}
-      <div className="flex gap-6">
-
-        {/* Purple gradient card */}
-        <div className="w-[550px] h-[180px] rounded-xl bg-gradient-to-br from-purple-600 to-pink-500 p-6 text-white shadow">
-          <h2 className="text-xl font-semibold">Classroom reminder</h2>
-          <p className="mt-3">“There is a DE quiz in this week….”</p>
-
-          <div className="flex gap-2 mt-8">
-            <div className="w-2 h-2 rounded-full bg-white opacity-80"></div>
-            <div className="w-2 h-2 rounded-full bg-white opacity-40"></div>
-            <div className="w-2 h-2 rounded-full bg-white opacity-40"></div>
-            <div className="w-2 h-2 rounded-full bg-white opacity-40"></div>
-          </div>
+        {/* ===========================
+            DARK MODE TOGGLE
+        ============================ */}
+        <div className="flex justify-end items-center mb-6">
+          <button
+            onClick={() => setDark((d) => !d)}
+            className="px-3 py-1 border rounded-lg shadow bg-white hover:bg-gray-100 text-black"
+          >
+            {dark ? "🌙 Dark" : "☀️ Light"}
+          </button>
         </div>
 
-        {/* SCHEDULE CARD */}
-        <div className="flex-1 h-[180px] border rounded-xl">
-          <div className="h-full w-full flex">
-            <div className="w-24 bg-gradient-to-b from-red-500 to-purple-600 text-white flex items-center justify-center text-lg font-semibold">
-              Schedule
-            </div>
-            <div className="flex-1 p-4">
-              <p className="text-gray-600">Upload your schedule</p>
-              {/* schedule grid screenshot not included */}
-            </div>
+        {/* ===========================
+            REMINDER (FULL WIDTH)
+        ============================ */}
+        <div className="mb-10">
+          <ReminderCarousel />
+        </div>
+
+        {/* ===========================
+            SCHEDULE (FULL WIDTH & WIDER)
+        ============================ */}
+        <div className="mb-10">
+          <ScheduleCard />
+        </div>
+
+        {/* ===========================
+            GREETING
+        ============================ */}
+        <h2 className="text-3xl font-bold mb-4">
+          Good Morning, Hazel 🌞
+        </h2>
+
+        {/* ===========================
+            RECENT REVIEW
+        ============================ */}
+        <div className="mt-6 mb-10">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold">Recent Review</h3>
+
+            <button
+              onClick={() => navigate("/mynotes")}
+              className="text-sm text-gray-500 hover:underline"
+            >
+              See all
+            </button>
           </div>
+
+          {recentNotes.length === 0 ? (
+            <p className="text-gray-500">No recent notes yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {recentNotes.map((note) => (
+                <NotesCard
+                  key={note.id}
+                  note={note}
+                  onRead={() => navigate(`/notes/read/${note.id}`)}
+                  onEdit={() => navigate(`/notes/edit/${note.id}`)}
+                  onDelete={() => handleDelete(note.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
-
-      {/* GOOD MORNING SECTION */}
-      <h2 className="text-2xl font-bold my-8">Good Morning</h2>
-
-      <h3 className="text-lg font-medium mb-3">Finished</h3>
-
-      <div className="grid grid-cols-5 gap-6 opacity-40">
-        {/* Empty placeholders (same as figma) */}
-        {Array(5).fill(0).map((_, i) => (
-          <div key={i} className="h-[180px] bg-white rounded-xl shadow"></div>
-        ))}
-      </div>
-
-      <h3 className="text-lg font-medium mt-10 mb-3">Recent Review</h3>
-
-      <div className="grid grid-cols-5 gap-6 opacity-40">
-        {Array(5).fill(0).map((_, i) => (
-          <div key={i} className="h-[180px] bg-white rounded-xl shadow"></div>
-        ))}
-      </div>
-
     </div>
   );
 }

@@ -1,76 +1,107 @@
-import { useState } from "react";
-import api from "../api/axios";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Register() {
-  const navigate = useNavigate();
+/*
+  Register page — Figma-like
+  Submits JSON to /api/auth/register
+*/
 
+export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  async function handleRegister(e) {
     e.preventDefault();
+    setBusy(true);
 
     try {
-      await api.post("/auth/register", {
-        name,
-        email,
-        password,
+      const res = await fetch("http://127.0.0.1:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
       });
 
-      navigate("/");
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.msg || data.error || "Register failed");
+        setBusy(false);
+        return;
+      }
+
+      alert("Registered! Please login.");
+      navigate("/login");
     } catch (err) {
-      setError("User already exists.");
+      console.error("Network error", err);
+      alert("Network error");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 p-10">
-      <div className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-lg text-center">
-
-        <h1 className="text-4xl font-bold text-orange-500 mb-4">UniHub</h1>
-        <p className="text-gray-600 mb-8">For Both Staff & Students</p>
-
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div className="min-h-screen bg-gradient-to-br from-orange-200 to-white flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
+        <div className="text-center mb-6">
+          <img src="/logo192.png" alt="logo" className="mx-auto w-16 h-16" />
+          <h1 className="text-2xl font-semibold mt-4 text-orange-600">Create account</h1>
+          <p className="text-gray-500 mt-2">For both staff & students</p>
+        </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Full Name"
-            className="w-full p-3 border rounded-lg"
-            onChange={(e) => setName(e.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Full name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="mt-1 w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              placeholder="Your full name"
+            />
+          </div>
 
-          <input
-            type="email"
-            placeholder="username@batstate-u.edu.ph"
-            className="w-full p-3 border rounded-lg"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-600">College email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              placeholder="you@college.edu"
+            />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-3 border rounded-lg"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1 w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-300"
+              placeholder="Create a password"
+            />
+          </div>
 
-          <button className="w-full bg-orange-500 text-white py-3 rounded-lg">
-            Register
-          </button>
-        </form>
-
-        <p className="mt-6 text-sm">
-          Already a user?{" "}
-          <span
-            className="text-orange-500 cursor-pointer"
-            onClick={() => navigate("/")}
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition"
           >
-            Login now
-          </span>
-        </p>
+            {busy ? "Registering..." : "Register"}
+          </button>
+
+          <div className="text-center text-sm text-gray-600">
+            Already a user?{" "}
+            <a className="text-orange-600 hover:underline" href="/login">
+              Login now
+            </a>
+          </div>
+        </form>
       </div>
     </div>
   );

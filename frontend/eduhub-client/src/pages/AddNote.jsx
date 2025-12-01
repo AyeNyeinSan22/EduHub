@@ -1,125 +1,165 @@
 import { useState } from "react";
-import axios from "../api/axios";
-import FileInput from "../components/FileInput";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 export default function AddNote() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    // Form States
-    const [subject, setSubject] = useState("");
-    const [title, setTitle] = useState("");
-    const [category, setCategory] = useState("E-Book");
-    const [notesText, setNotesText] = useState("");
+  // form states
+  const [subject, setSubject] = useState("");
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [notes, setNotes] = useState("");
 
-    // File States
-    const [file, setFile] = useState(null);
-    const [cover, setCover] = useState(null);
+  const [file, setFile] = useState(null);
+  const [cover, setCover] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const [loading, setLoading] = useState(false);
 
-        // Validate required fields
-        if (!subject || !title || !category || !notesText || !file) {
-            alert("Please fill in all required fields.");
-            return;
-        }
+  // Handle cover preview
+  const handleCoverChange = (e) => {
+    const c = e.target.files[0];
+    setCover(c);
 
-        const formData = new FormData();
-        formData.append("subject", subject);
-        formData.append("title", title);
-        formData.append("category", category);
-        formData.append("notes", notesText);
+    if (c) {
+      setCoverPreview(URL.createObjectURL(c));
+    }
+  };
 
-        if (file) formData.append("file", file);
-        if (cover) formData.append("cover", cover);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        try {
-            await axios.post("/notes", formData, {
-                headers: { "Content-Type": "multipart/form-data" }
-            });
+    if (!subject || !title || !category) {
+      alert("Please fill all required fields.");
+      return;
+    }
 
-            alert("Note added successfully!");
-            navigate("/mynotes");
+    setLoading(true);
 
-        } catch (error) {
-            console.error(error);
-            alert("Upload failed.");
-        }
-    };
+    const formData = new FormData();
+    formData.append("subject", subject);
+    formData.append("title", title);
+    formData.append("category", category);
+    formData.append("notes", notes);
 
-    return (
-        <div className="p-6 w-full">
-            <div className="bg-white shadow rounded-lg p-10">
-                <h2 className="text-xl font-semibold mb-8">Fill up Book Details</h2>
+    if (file) formData.append("file", file);
+    if (cover) formData.append("cover", cover);
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+    try {
+      await axios.post("http://127.0.0.1:5000/api/notes", formData);
 
-                    {/* Subject Input */}
-                    <input
-                        type="text"
-                        placeholder="Subject Name"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        className="border p-3 rounded w-full"
-                    />
+      alert("Note created successfully!");
 
-                    {/* Title */}
-                    <input
-                        type="text"
-                        placeholder="Title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="border p-3 rounded w-full"
-                    />
+      // clear form
+      setSubject("");
+      setTitle("");
+      setCategory("");
+      setNotes("");
+      setFile(null);
+      setCover(null);
+      setCoverPreview(null);
 
-                    {/* Category */}
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="border p-3 rounded w-full"
-                    >
-                        <option value="E-Book">E-Book</option>
-                        <option value="Audio-Book">Audio Book</option>
-                        <option value="Articles">Articles</option>
-                        <option value="Favorite">Favorite</option>
-                    </select>
+      navigate("/mynotes");
 
-                    {/* File Upload */}
-                    <FileInput
-                        label="Select File"
-                        name="file"
-                        valueFile={file}
-                        onChange={setFile}
-                        accept=".pdf,.doc,.docx,.pptx"
-                    />
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Upload failed.");
+    }
 
-                    {/* Cover Upload */}
-                    <FileInput
-                        label="Upload Note Cover"
-                        name="cover"
-                        valueFile={cover}
-                        onChange={setCover}
-                        accept="image/*"
-                    />
+    setLoading(false);
+  };
 
-                    {/* Notes Text */}
-                    <textarea
-                        placeholder="Notes..."
-                        value={notesText}
-                        onChange={(e) => setNotesText(e.target.value)}
-                        className="border p-3 rounded w-full h-24"
-                    ></textarea>
+  return (
+    <div className="p-10">
+      <h1 className="text-center text-xl font-semibold mb-10">
+        Fill up Book Details
+      </h1>
 
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        className="bg-orange-500 text-white px-6 py-3 rounded w-full hover:bg-orange-600 transition"
-                    >
-                        Submit
-                    </button>
-                </form>
-            </div>
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-3xl mx-auto bg-white p-10 rounded-xl shadow-sm space-y-6"
+      >
+
+        {/* Subject & Category */}
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Subject Name"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="flex-1 border rounded-lg p-3"
+            required
+          />
+
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-52 border rounded-lg p-3"
+            required
+          >
+            <option value="">Category</option>
+            <option value="E-Book">E-Book</option>
+            <option value="Notes">Notes</option>
+            <option value="Audio">Audio</option>
+            <option value="Journal">Journal</option>
+          </select>
         </div>
-    );
+
+        {/* Title */}
+        <input
+          type="text"
+          placeholder="Book Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full border rounded-lg p-3"
+          required
+        />
+
+        {/* File Upload */}
+        <div className="border rounded-lg p-3 flex items-center justify-between">
+          <span className="text-gray-700">Upload PDF / Document</span>
+
+          <input
+            type="file"
+            className="w-40"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
+        </div>
+
+        {/* Cover Upload */}
+        <div className="border rounded-lg p-3">
+          <label className="block mb-2 font-medium text-gray-700">
+            Upload Note Cover
+          </label>
+
+          <input type="file" accept="image/*" onChange={handleCoverChange} />
+
+          {coverPreview && (
+            <img
+              src={coverPreview}
+              className="mt-4 w-40 h-52 object-cover rounded border"
+              alt="Cover Preview"
+            />
+          )}
+        </div>
+
+        {/* Notes Field */}
+        <textarea
+          placeholder="Notes…"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="w-full border rounded-lg p-3 h-24"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-orange-500 text-white font-semibold rounded-lg py-3 text-lg hover:bg-orange-600 transition"
+        >
+          {loading ? "Uploading..." : "Submit"}
+        </button>
+      </form>
+    </div>
+  );
 }
