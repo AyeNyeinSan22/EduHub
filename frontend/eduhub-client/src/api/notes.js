@@ -1,6 +1,6 @@
 // src/api/notes.js
 import { apiJSON, apiForm } from "./client";
-
+const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/api";
 /**
  * Returns parsed JSON from the response or throws if non-OK.
  */
@@ -94,4 +94,8 @@ export async function getLastPage(noteId) {
 export async function saveLastPage(noteId, page) {
   const res = await apiJSON(`/api/notes/${noteId}/lastpage`, "POST", { page });
   return parseJsonResponse(res);
+}
+
+export function searchNotes(query) {
+  return fetch(`${API}/notes/search?q=${encodeURIComponent(query)}`);
 }

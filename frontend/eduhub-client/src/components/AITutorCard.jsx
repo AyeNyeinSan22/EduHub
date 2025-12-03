@@ -1,93 +1,130 @@
-import React, { useState, useRef, useEffect } from "react";
-import { askAI } from "../api/ai";
+// import React, { useState } from "react";
+// import axios from "axios";
 
-export default function AITutorCard() {
-  const [messages, setMessages] = useState([
-    { role: "ai", text: "Hello! I'm your study assistant. How can I help today? 😊" }
-  ]);
+// export default function AiTutorCard() {
+//   const [input, setInput] = useState("");
+//   const [reply, setReply] = useState("");
+//   const [loading, setLoading] = useState(false);
+
+//   async function askTutor() {
+//     if (!input.trim()) return;
+//     setLoading(true);
+//     setReply("");
+
+//     try {
+//       const res = await axios.post("http://127.0.0.1:5000/api/ai/tutor", {
+//         question: input,
+//       });
+
+//       setReply(res.data.reply || "No reply.");
+//     } catch (e) {
+//       setReply("⚠️ Tutor error.");
+//     }
+
+//     setLoading(false);
+//   }
+
+//   return (
+//     <div className="bg-white p-6 rounded-xl h-full shadow-md flex flex-col">
+//       <h2 className="text-lg font-bold mb-3">AI Study Tutor</h2>
+
+//       <textarea
+//         className="border p-2 rounded w-full h-24"
+//         placeholder="Ask anything…"
+//         value={input}
+//         onChange={(e) => setInput(e.target.value)}
+//       />
+
+//       <button
+//         onClick={askTutor}
+//         className="mt-3 bg-purple-600 text-white px-4 py-2 rounded"
+//       >
+//         {loading ? "Thinking…" : "Ask Tutor"}
+//       </button>
+
+//       <div className="mt-4 p-3 bg-gray-50 rounded h-40 overflow-auto whitespace-pre-wrap">
+//         {loading ? "⏳ Processing…" : reply || "Ask something to begin."}
+//       </div>
+//     </div>
+//   );
+// }
+import React, { useState } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
+
+export default function AiTutorCard() {
   const [input, setInput] = useState("");
+  const [reply, setReply] = useState("Ask something to begin.");
   const [loading, setLoading] = useState(false);
 
-  const bottomRef = useRef(null);
-
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  async function sendMessage() {
+  async function askTutor() {
     if (!input.trim()) return;
-
-    const userText = input.trim();
-
-    // Add user message
-    setMessages(prev => [...prev, { role: "user", text: userText }]);
-    setInput("");
     setLoading(true);
+    setReply("");
 
     try {
-      const res = await askAI(userText);
+      const res = await axios.post("http://127.0.0.1:5000/api/ai/tutor", {
+        question: input,
+      });
 
-      setMessages(prev => [
-        ...prev,
-        { role: "ai", text: res.reply || "No response received." }
-      ]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [
-        ...prev,
-        { role: "ai", text: "⚠️ I encountered an error. Try again later." }
-      ]);
+      setReply(res.data.reply || "No reply.");
+    } catch (e) {
+      setReply("⚠️ Tutor error.");
     }
 
     setLoading(false);
+    setInput("");
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 h-[380px] flex flex-col">
-
-      <h2 className="text-xl font-semibold mb-3">AI Study Tutor</h2>
-
-      {/* Chat area */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
-              m.role === "user"
-                ? "bg-indigo-500 text-white ml-auto"
-                : "bg-gray-100 text-gray-900"
-            }`}
-          >
-            {m.text}
-          </div>
-        ))}
-
-        {loading && (
-          <div className="text-gray-500 text-sm animate-pulse">AI is typing...</div>
-        )}
-
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Input area */}
-      <div className="mt-3 flex gap-2">
-        <input
-          className="flex-1 border p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-400 outline-none"
-          placeholder="Ask me anything about your lessons..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
+    <div className="bg-white/90 backdrop-blur-sm h-full p-6 rounded-2xl shadow-xl flex flex-col">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">AI Study Tutor</h2>
 
         <button
-          onClick={sendMessage}
-          className="px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          onClick={() => setReply("Ask something to begin.")}
+          className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg"
         >
-          ➤
+          Clear
         </button>
       </div>
 
+      {/* Chat Window */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 rounded-xl p-4 shadow-inner border border-gray-100">
+        {loading ? (
+          <div className="animate-pulse">
+            <div className="w-40 h-4 bg-gray-300 rounded mb-2"></div>
+            <div className="w-56 h-4 bg-gray-300 rounded"></div>
+          </div>
+        ) : (
+          <motion.div
+            key={reply}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white p-3 rounded-xl shadow text-gray-700 whitespace-pre-wrap"
+          >
+            {reply}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="mt-4">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask me anything about your lessons…"
+          className="w-full h-24 p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+        />
+
+        <button
+          onClick={askTutor}
+          className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-xl shadow-md transition"
+        >
+          {loading ? "Thinking…" : "Ask Tutor"}
+        </button>
+      </div>
     </div>
   );
 }

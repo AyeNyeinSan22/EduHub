@@ -29,7 +29,7 @@ export default function Login() {
     // Save token + user in AuthProvider
     login({ token: data.token, user: data.user });
 
-    navigate("/mynotes");
+    navigate("/home");
   }
 
   return (
@@ -37,11 +37,11 @@ export default function Login() {
       <div className="bg-white w-[420px] rounded-2xl shadow-lg px-10 py-10">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src="/unilogo.png"
+          {/* <img
+            src="./logo.png"
             alt="logo"
             className="w-16 h-16 mb-2"
-          />
+          /> */}
           <h1 className="text-3xl font-semibold text-[#FF6E4E]">UniHub</h1>
         </div>
 

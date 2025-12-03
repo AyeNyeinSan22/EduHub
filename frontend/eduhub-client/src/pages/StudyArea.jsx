@@ -7,7 +7,7 @@ import TasksCard from "../components/TasksCard";
 import SubjectOverview from "../components/SubjectsOverviewCard";
 import RecentNotesCard from "../components/RecentNotesCard";
 import ScheduleCard from "../components/ScheduleCard";
-import AiTutorCard from "../components/AITutorCard";
+import AiTutorCard from "../components/AiTutorCard";
 import PomodoroCard from "../components/PomodoroCard";
 
 

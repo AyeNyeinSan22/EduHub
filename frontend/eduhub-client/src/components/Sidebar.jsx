@@ -1,41 +1,48 @@
-import { Link } from "react-router-dom";
-import { FiHome, FiSearch, FiBookOpen, FiBook } from "react-icons/fi";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import {
+  Home,
+  Search,
+  BookOpen,
+  Layers,
+  Info,
+} from "lucide-react";
 
 export default function Sidebar() {
+  const navItems = [
+    { path: "/home", label: "Home", icon: <Home size={20} /> },
+    { path: "/search", label: "Search", icon: <Search size={20} /> },
+    { path: "/mynotes", label: "My Notes", icon: <BookOpen size={20} /> },
+    { path: "/study", label: "Study Area", icon: <Layers size={20} /> },
+    { path: "/about", label: "About", icon: <Info size={20} /> },
+  ];
+
   return (
-    <div className="w-64 bg-white shadow-md p-6 flex flex-col">
+    <div className="h-screen w-64 bg-white border-r flex flex-col py-6 px-4 shadow-sm">
 
-      {/* LOGO */}
-      <h1 className="text-3xl font-bold text-orange-500 mb-10">UniHub</h1>
+      {/* Logo */}
+      <h1 className="text-3xl font-extrabold text-orange-600 px-2 mb-10">
+        UniHub
+      </h1>
 
-      {/* MENU */}
-      <nav className="space-y-6 text-gray-700">
-
-        <Link to="/" className="flex items-center gap-3 hover:text-orange-500">
-          <FiHome size={20} /> Home
-        </Link>
-
-        <Link to="/search" className="flex items-center gap-3 hover:text-orange-500">
-          <FiSearch size={20} /> Search
-        </Link>
-
-        <Link to="/mynotes" className="flex items-center gap-3 hover:text-orange-500">
-          <FiBookOpen size={20} /> My Notes
-        </Link>
-
-        <Link to="/study" className="flex items-center gap-3 hover:text-orange-500">
-          <FiBook size={20} /> Study Area
-        </Link>
-
+      {/* Navigation */}
+      <nav className="flex flex-col gap-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all 
+               ${isActive ? "bg-orange-100 text-orange-600 font-semibold" : "text-gray-700 hover:bg-gray-100"}`
+            }
+          >
+            <span className="text-orange-500">{item.icon}</span>
+            {item.label}
+          </NavLink>
+        ))}
       </nav>
 
-      {/* FOOTER */}
-      <div className="mt-auto text-sm text-gray-400 pt-10">
-        <p>About</p>
-        <p>Support</p>
-        <p>Terms & Conditions</p>
-      </div>
-
+     
     </div>
   );
 }

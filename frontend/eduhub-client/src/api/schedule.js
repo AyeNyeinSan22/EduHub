@@ -1,26 +1,58 @@
 // src/api/schedule.js
-import { apiJSON } from "./client";
+const API = "http://127.0.0.1:5000/api";
 
-// GET all schedule entries
 export async function getSchedule() {
-  return apiJSON("/api/schedule", "GET");
+  return fetch(`${API}/schedule`);
 }
 
-// CREATE schedule entry
-export async function createSchedule(form) {
-  return apiJSON("/api/schedule", "POST", form);
+export async function createSchedule(data) {
+  return fetch(`${API}/schedule`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
-// UPDATE schedule entry
-export async function updateSchedule(id, form) {
-  return apiJSON(`/api/schedule/${id}`, "PUT", form);
+export async function updateSchedule(id, data) {
+  return fetch(`${API}/schedule/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
-// DELETE schedule entry
 export async function deleteSchedule(id) {
-  return apiJSON(`/api/schedule/${id}`, "DELETE");
+  return fetch(`${API}/schedule/${id}`, {
+    method: "DELETE",
+  });
 }
-// BULK UPLOAD schedule entries (JSON array)
-export async function uploadSchedule(data) {
-  return apiJSON("/api/schedule/upload", "POST", data);
+
+/**
+ * Upload an array of items to backend by POSTing each item.
+ * Backend creates items individually with POST /schedule
+ * Returns array of responses (useful for debugging).
+ */
+export async function uploadSchedule(items) {
+  const results = [];
+  for (const it of items) {
+    // basic validation skip empty rows
+    if (!it.title?.trim() && (!it.start_time?.trim() && !it.location?.trim())) {
+      continue;
+    }
+    // call createSchedule
+    const res = await createSchedule({
+      title: it.title,
+      weekday: Number(it.weekday),
+      start_time: it.start_time,
+      location: it.location,
+    });
+    results.push(res);
+  }
+  return results;
+}
+
+export function deleteAllSchedule() {
+  return fetch(`${API}/schedule`, {
+    method: "DELETE"
+  });
 }

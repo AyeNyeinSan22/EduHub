@@ -1,98 +1,116 @@
-# # backend/routes/ai_routes.py
-# from flask import Blueprint, request, jsonify
-# import os
-# import openai
+# backend/routes/ai_routes.py
 
-# ai_bp = Blueprint("ai", __name__)
-
-# # Load key from environment (.env)
-# openai.api_key = os.getenv("OPENAI_API_KEY")
-
-
-# @ai_bp.route("/summary", methods=["POST"])
-# def summarize():
-#     data = request.get_json() or {}
-
-#     scope = data.get("scope", "page")
-#     page = data.get("page")
-#     text = data.get("text", "")
-
-#     if not openai.api_key:
-#         return jsonify({"error": "Missing OPENAI_API_KEY"}), 500
-
-#     if not text.strip():
-#         return jsonify({"summary": "No text provided."})
-
-#     if scope == "page":
-#         prompt = f"""
-# You are an academic assistant. Summarize the following PDF page clearly.
-
-# PAGE NUMBER: {page}
-
-# TEXT TO SUMMARIZE:
-# {text}
-
-# Return a clean bullet-point summary.
-# """
-#     else:
-#         prompt = f"""
-# You are an academic assistant. Summarize the full PDF.
-
-# TEXT: 
-# {text}
-
-# Return:
-# - A clear overview  
-# - Key ideas  
-# - Important definitions  
-# - Main concepts
-# """
-
-#     try:
-#         response = openai.chat.completions.create(
-#             model="gpt-4o-mini",
-#             messages=[{"role": "user", "content": prompt}],
-#             max_tokens=500,
-#         )
-
-#         summary = response.choices[0].message["content"]
-
-#         return jsonify({"summary": summary})
-
-#     except Exception as e:
-#         print("AI Summary Error:", e)
-#         return jsonify({"error": "AI request failed", "details": str(e)}), 500
-from flask import Blueprint, request, jsonify
-from openai import OpenAI
 import os
+from flask import Blueprint, request, jsonify
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+from google import genai
+from google.genai import types, errors
 
 ai_bp = Blueprint("ai", __name__)
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize Gemini Client
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-@ai_bp.post("/ai")
-def ai_chat():
-    data = request.get_json()
-    message = data.get("message", "")
 
-    if not message:
-        return jsonify({"reply": "Please type a question first."})
+# -------------------------------
+# 1) AI SUMMARY FOR PDF
+# -------------------------------
+@ai_bp.route("/summary", methods=["POST"])
+def summarize():
+    """
+    Summarize either a single page or the full extracted PDF text.
+    Expected JSON:
+    {
+        "scope": "page" or "full",
+        "page": 3,
+        "text": "extracted text here..."
+    }
+    """
+    data = request.get_json() or {}
+
+    scope = data.get("scope", "page")
+    page = data.get("page")
+    text = data.get("text", "")
+
+    if not text.strip():
+        return jsonify({"summary": "⚠️ No text extracted on this page."}), 200
+
+    # Build prompt
+    if scope == "page":
+        prompt = f"""
+You are a professional study assistant.
+
+Summarize the following text from a PDF **page {page}**.
+
+TEXT:
+{text}
+
+Return:
+- 4–8 clean bullet points  
+- Simple wording  
+- Key ideas only  
+"""
+    else:
+        prompt = f"""
+You are a professional study tutor.
+
+Summarize the **entire PDF** text below.
+
+TEXT:
+{text}
+
+Return:
+- Overview  
+- Key ideas  
+- Concepts  
+- Important definitions  
+- Bullet points  
+"""
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful study tutor."},
-                {"role": "user", "content": message}
-            ]
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[prompt]
         )
 
-        # Correct way to extract content (new OpenAI format)
-        answer = response.choices[0].message.content
+        summary = response.text or "No summary generated."
+        return jsonify({"summary": summary})
 
-        return jsonify({"reply": answer})
+    except errors.ServerError as e:
+        print("GEMINI SERVER ERROR:", e)
+        return jsonify({"summary": "❗ Gemini server error. Check usage quota."}), 500
 
     except Exception as e:
-        print("AI ERROR:", e)
-        return jsonify({"reply": "⚠️ AI server error. Check backend console."})
+        print("AI SUMMARY ERROR:", e)
+        return jsonify({"summary": f"❗ AI error: {e}"}), 500
 
+
+
+# -------------------------------
+# 2) GENERAL AI CHAT (Tutor)
+# -------------------------------
+@ai_bp.post("/tutor")
+def tutor_reply():
+    try:
+        data = request.get_json() or {}
+        question = data.get("question", "").strip()
+
+        if not question:
+            return jsonify({"reply": "Please enter a question first."}), 400
+
+        # Gemini request
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[question]
+        )
+
+        reply = response.text or "No response generated."
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        print("AI Tutor Error:", e)
+        return jsonify({"reply": "Server error", "error": str(e)}), 500

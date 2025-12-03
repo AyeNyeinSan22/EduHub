@@ -3,11 +3,12 @@ from backend.models import db, ScheduleItem
 
 schedule_bp = Blueprint("schedule_bp", __name__)
 
-# GET weekly schedule
-@schedule_bp.route("/schedule", methods=["GET"])
+# -------------------------------------
+# GET ALL SCHEDULE
+# -------------------------------------
+@schedule_bp.get("/schedule")
 def get_schedule():
     items = ScheduleItem.query.order_by(ScheduleItem.weekday.asc()).all()
-
     return jsonify([
         {
             "id": item.id,
@@ -15,28 +16,60 @@ def get_schedule():
             "weekday": item.weekday,
             "start_time": item.start_time,
             "location": item.location,
-        }
-        for item in items
+        } for item in items
     ])
 
 
-# UPLOAD schedule 
-@schedule_bp.route("/schedule/upload", methods=["POST"])
-def bulk_upload_schedule():
-    data = request.get_json()
+# -------------------------------------
+# CREATE A CLASS
+# -------------------------------------
+@schedule_bp.post("/schedule")
+def create_schedule():
+    data = request.json
+    item = ScheduleItem(
+        title=data["title"],
+        weekday=data["weekday"],
+        start_time=data["start_time"],
+        location=data["location"]
+    )
+    db.session.add(item)
+    db.session.commit()
+    return jsonify({"message": "created", "id": item.id}), 201
 
-    if not isinstance(data, list):
-        return jsonify({"error": "Expected a list of schedule items"}), 400
 
-    for item in data:
-        new_item = ScheduleItem(
-            title=item.get("title"),
-            weekday=item.get("weekday"),
-            start_time=item.get("start_time"),
-            location=item.get("location")
-        )
-        db.session.add(new_item)
+# -------------------------------------
+# UPDATE A CLASS
+# -------------------------------------
+@schedule_bp.put("/schedule/<int:item_id>")
+def update_schedule(item_id):
+    item = ScheduleItem.query.get_or_404(item_id)
+    data = request.json
+
+    item.title = data["title"]
+    item.weekday = data["weekday"]
+    item.start_time = data["start_time"]
+    item.location = data["location"]
 
     db.session.commit()
+    return jsonify({"message": "updated"})
 
-    return jsonify({"message": "Schedule uploaded"}), 200
+
+# -------------------------------------
+# DELETE A CLASS
+# -------------------------------------
+@schedule_bp.delete("/schedule/<int:item_id>")
+def delete_schedule(item_id):
+    item = ScheduleItem.query.get_or_404(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
+# -------------------------------------
+# DELETE ALL CLASSES
+# -------------------------------------
+@schedule_bp.delete("/schedule")
+def delete_all_schedule():
+    ScheduleItem.query.delete()
+    db.session.commit()
+    return jsonify({"message": "all deleted"}), 200
+

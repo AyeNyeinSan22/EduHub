@@ -1,56 +1,49 @@
 // src/hooks/useStreak.js
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function useStreak() {
-  const [streak, setStreak] = useState(
-    Number(localStorage.getItem("study_streak") || 0)
-  );
+  const [streak, setStreak] = useState(() => {
+    const saved = localStorage.getItem("study-streak");
+    return saved ? Number(saved) : 0;
+  });
 
-  const [lastDay, setLastDay] = useState(
-    localStorage.getItem("study_last_day") || null
-  );
+  const [lastDate, setLastDate] = useState(() => {
+    return localStorage.getItem("streak-last-date");
+  });
 
-  // Save streak and last day
   useEffect(() => {
-    localStorage.setItem("study_streak", streak);
-    if (lastDay) localStorage.setItem("study_last_day", lastDay);
-  }, [streak, lastDay]);
+    const today = new Date().toDateString();
 
-  // Called when a Pomodoro work session finishes
-  function addStudyCheckIn() {
-    const today = new Date().toISOString().split("T")[0];
-
-    // First time ever
-    if (!lastDay) {
-      setLastDay(today);
-      setStreak(1);
+    // First time opening
+    if (!lastDate) {
+      localStorage.setItem("streak-last-date", today);
       return;
     }
 
-    // Already studied today
-    if (lastDay === today) return;
+    // If opened again on same day → do nothing
+    if (lastDate === today) return;
 
-    // Calculate yesterday
-    const yesterday = new Date(Date.now() - 86400000)
-      .toISOString()
-      .split("T")[0];
+    // Calculate difference
+    const prev = new Date(lastDate);
+    const diff = (new Date(today) - prev) / (1000 * 60 * 60 * 24);
 
-    // If yesterday was last study day -> streak++
-    if (lastDay === yesterday) {
-      setStreak((s) => s + 1);
-      setLastDay(today);
+    if (diff === 1) {
+      // Consecutive day → streak +1
+      setStreak(prev => {
+        const updated = prev + 1;
+        localStorage.setItem("study-streak", updated);
+        return updated;
+      });
     } else {
-      // Missed a day → reset streak
+      // Missed day(s) → reset
       setStreak(1);
-      setLastDay(today);
+      localStorage.setItem("study-streak", 1);
     }
-  }
 
-  // Reset manually
-  function resetStreak() {
-    setStreak(0);
-    setLastDay(null);
-  }
+    // Update last date
+    setLastDate(today);
+    localStorage.setItem("streak-last-date", today);
+  }, []);
 
-  return { streak, addStudyCheckIn, resetStreak };
+  return { streak };
 }

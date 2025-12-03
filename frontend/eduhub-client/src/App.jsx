@@ -11,6 +11,9 @@ import EditNote from "./pages/EditNote";
 import ReadNote from "./pages/ReadNote";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Profile from "./pages/Profile";
+import SearchResults from "./pages/SearchResults";
+import AboutPage from "./pages/AboutPage";
 
 export default function App() {
   return (
@@ -23,6 +26,8 @@ export default function App() {
       {/* MAIN APP (WITH LAYOUT) */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/profile" element={<Profile/>}/>
         <Route path="mynotes" element={<MyNotes />} />
         <Route path="notes/new" element={<AddNote />} />
         <Route path="notes/edit/:id" element={<EditNote />} />
@@ -31,6 +36,10 @@ export default function App() {
         <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/reminders/new" element={<ReminderForm />} />
         <Route path="/reminders/edit/:id" element={<ReminderForm />} />
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/about" element={<AboutPage />} />
+
+
       </Route>
 
     </Routes>

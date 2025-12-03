@@ -1,6 +1,6 @@
 // src/components/ScheduleCard.jsx
 import React, { useEffect, useState } from "react";
-import { getSchedule, uploadSchedule } from "../api/schedule";
+import { getSchedule, createSchedule, updateSchedule, deleteSchedule,deleteAllSchedule } from "../api/schedule";
 import ScheduleUploadModal from "./ScheduleUploadModal";
 import EditScheduleModal from "./EditScheduleModal";
 
@@ -46,89 +46,85 @@ export default function ScheduleCard() {
   function classesByDay(dayIndex) {
     return schedule
       .filter((s) => Number(s.weekday) === dayIndex)
-      .sort((a, b) => a.start_time.localeCompare(b.start_time));
+      .sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
   }
 
+  // Called from EditScheduleModal onSave(updated)
   async function saveEdited(updated) {
-    const newList = schedule.map((s) =>
-      s.id === updated.id ? updated : s
-    );
-    setSchedule(newList);
-    await uploadSchedule(newList);
+    try {
+      await updateSchedule(updated.id, updated);
+      await loadSchedule();
+    } catch (e) {
+      console.error("Save edited error", e);
+    }
   }
 
   async function createClass(item) {
-    const newId = Math.max(0, ...schedule.map((s) => s.id || 0)) + 1;
-    const newList = [...schedule, { ...item, id: newId }];
-    setSchedule(newList);
-    await uploadSchedule(newList);
+    try {
+      await createSchedule(item);
+      await loadSchedule();
+    } catch (e) {
+      console.error("Create class error", e);
+    }
   }
 
   async function deleteClass(id) {
     if (!confirm("Delete class?")) return;
-    const newList = schedule.filter((s) => s.id !== id);
-    setSchedule(newList);
-    await uploadSchedule(newList);
+    try {
+      await deleteSchedule(id);
+      await loadSchedule();
+    } catch (e) {
+      console.error("Delete error", e);
+    }
   }
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 border min-h-[380px] flex flex-col">
-      {/* Title Row */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-xl">Schedule</h3>
+      <div className="flex items-center justify-between mb-4">
+      <h3 className="font-semibold text-xl">Schedule</h3>
 
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm shadow hover:opacity-90"
-        >
-          Upload
-        </button>
-      </div>
+      {/* Button Group */}
+      <div className="flex gap-3">
+       <button
+        onClick={() => setShowUploadModal(true)}
+        className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm shadow hover:opacity-90"
+       >
+      Upload
+       </button>
 
-      {/* Day Grid */}
+       <button
+        onClick={async () => {
+          if (confirm("Delete ALL classes?")) {
+          await deleteAllSchedule();
+          loadSchedule();
+        }
+        }}
+      className="px-4 py-2 bg-red-500 text-white rounded-full text-sm shadow hover:bg-red-600"
+       >
+        Delete All
+      </button>
+  </div>
+</div>
+
+
       <div className="grid grid-cols-7 gap-4 flex-1">
         {days.map((day, di) => (
-          <div
-            key={day}
-            className="p-4 bg-gray-50 rounded-xl shadow-sm min-h-[240px] flex flex-col"
-          >
+          <div key={day} className="p-4 bg-gray-50 rounded-xl shadow-sm min-h-[240px] flex flex-col">
             <p className="text-sm font-semibold text-gray-700 mb-3">{day}</p>
 
             <div className="space-y-3 flex-1 overflow-y-auto">
-              {classesByDay(di).length === 0 && (
-                <p className="text-xs text-gray-400">No class</p>
-              )}
+              {classesByDay(di).length === 0 && <p className="text-xs text-gray-400">No class</p>}
 
               {classesByDay(di).map((cls) => (
-                <div
-                  key={cls.id}
-                  className={`p-3 rounded-xl shadow flex items-start justify-between text-sm ${colorForTitle(
-                    cls.title
-                  )}`}
-                >
+                <div key={cls.id} className={`p-3 rounded-xl shadow flex items-start justify-between text-sm ${colorForTitle(cls.title)}`}>
                   <div>
                     <p className="font-bold text-base leading-tight">{cls.title}</p>
-                    <p className="text-xs opacity-80 mt-1">
-                      {cls.start_time} • {cls.location}
-                    </p>
+                    <p className="text-xs opacity-80 mt-1">{cls.start_time} • {cls.location}</p>
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => {
-                        setEditItem(cls);
-                        setShowModal(true);
-                      }}
-                      className="text-xs bg-white/40 px-2 py-1 rounded hover:bg-white/60"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteClass(cls.id)}
-                      className="text-xs bg-white/40 px-2 py-1 rounded hover:bg-white/60"
-                    >
-                      Del
-                    </button>
+                    <button onClick={() => { setEditItem(cls); setShowModal(true); }} className="text-xs bg-white/40 px-2 py-1 rounded hover:bg-white/60">Edit</button>
+                    <button onClick={() => deleteClass(cls.id)} className="text-xs bg-white/40 px-2 py-1 rounded hover:bg-white/60">Del</button>
                   </div>
                 </div>
               ))}
@@ -137,15 +133,11 @@ export default function ScheduleCard() {
         ))}
       </div>
 
-      {/* Modals */}
       <EditScheduleModal
         open={showModal}
         item={editItem}
-        onClose={() => {
-          setShowModal(false);
-          setEditItem(null);
-        }}
-        onSave={(u) => (!u.id ? createClass(u) : saveEdited(u))}
+        onClose={() => { setShowModal(false); setEditItem(null); }}
+        onSave={saveEdited}
       />
 
       <ScheduleUploadModal

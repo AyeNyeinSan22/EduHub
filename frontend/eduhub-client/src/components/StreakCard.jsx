@@ -1,5 +1,5 @@
 // src/components/StreakCard.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import useStreak from "../hooks/useStreak";
 import confetti from "canvas-confetti";
 
@@ -15,13 +15,15 @@ export default function StreakCard() {
     return "Master level 🌟";
   }
 
-  // Achievements (trigger confetti)
-  if (streak === 3 || streak === 7 || streak === 30) {
-    confetti({ particleCount: 120, spread: 70 });
-  }
+  // Trigger celebration only ONCE
+  useEffect(() => {
+    if ([3, 7, 30].includes(streak)) {
+      confetti({ particleCount: 150, spread: 70 });
+    }
+  }, [streak]);
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-md">
+    <div className="bg-white p-6 rounded-2xl shadow-md h-full">
       <h2 className="text-lg font-semibold mb-2">Study Streak</h2>
 
       <div className="text-3xl font-bold text-purple-600">

@@ -382,3 +382,61 @@ def last_page(note_id):
         )
         db.session.commit()
         return jsonify({"msg": "saved"}), 200
+    
+    
+ #search notes
+@notes_bp.get("/notes/search")
+def search_notes():
+    q = request.args.get("q", "").lower()
+
+    if not q:
+        return jsonify([])
+
+    results = Notes.query.filter(
+        Notes.title.ilike(f"%{q}%") |
+        Notes.subject.ilike(f"%{q}%") |
+        Notes.category.ilike(f"%{q}%")
+    ).all()
+
+    return jsonify([
+        {
+            "id": n.id,
+            "title": n.title,
+            "subject": n.subject,
+            "category": n.category
+        }
+        for n in results
+    ])
+
+ 
+    
+#Subject overivew
+@notes_bp.route("/subjects/overview", methods=["GET"])
+def subjects_overview():
+    """
+    Returns list of subjects with:
+    - total notes
+    - last opened page
+    - completion %
+    """
+    notes = Note.query.all()
+
+    # Group by subject
+    subjects = {}
+    for n in notes:
+        if n.subject not in subjects:
+            subjects[n.subject] = {
+                "subject": n.subject,
+                "total": 0,
+                "completed": 0
+            }
+
+        subjects[n.subject]["total"] += 1
+
+        # Example logic: a note is “completed” if last_page == pageCount
+        if n.last_page and n.last_page > 5:  
+            subjects[n.subject]["completed"] += 1
+
+    return jsonify(list(subjects.values()))
+   
+   

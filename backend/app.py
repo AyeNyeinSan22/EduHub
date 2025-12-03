@@ -81,7 +81,13 @@ def create_app():
     # Init extensions
     db.init_app(app)
     socketio.init_app(app)
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    # CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    CORS(app,
+     resources={r"/*": {"origins": "*"}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     expose_headers=["Content-Type", "Authorization"])
+
     jwt.init_app(app)   # ✅ VERY IMPORTANT — without this JWT won't work!
 
     # Register blueprints
@@ -89,11 +95,14 @@ def create_app():
     from backend.routes.notes_routes import notes_bp
     from backend.routes.reminders_routes import reminders_bp
     from backend.routes.schedule_routes import schedule_bp
+    from backend.routes.ai_routes import ai_bp
     
+ 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(notes_bp, url_prefix="/api/notes")
     app.register_blueprint(reminders_bp, url_prefix="/api")
     app.register_blueprint(schedule_bp, url_prefix="/api")
+    app.register_blueprint(ai_bp, url_prefix="/api/ai")
     
 
 
